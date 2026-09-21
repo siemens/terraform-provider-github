@@ -16,6 +16,17 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
+var supportedEnterpriseRulesetBypassModes = []string{"always", bypassModePullRequest, "exempt"}
+
+var supportedEnterpriseRulesetBypassActorTypes = []string{
+	"Integration",
+	"OrganizationAdmin",
+	"RepositoryRole",
+	"Team",
+	bypassActorTypeDeployKey,
+	"EnterpriseOwner",
+}
+
 var supportedEnterpriseRulesetTargetTypes = []string{
 	string(github.RulesetTargetBranch),
 	string(github.RulesetTargetTag),
@@ -83,13 +94,13 @@ func resourceGithubEnterpriseRuleset() *schema.Resource {
 						"actor_type": {
 							Type:             schema.TypeString,
 							Required:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"Integration", "OrganizationAdmin", "RepositoryRole", "Team", "DeployKey", "EnterpriseOwner"}, false)),
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(supportedEnterpriseRulesetBypassActorTypes, false)),
 							Description:      "The type of actor that can bypass a ruleset. Can be one of: `Integration`, `OrganizationAdmin`, `RepositoryRole`, `Team`, `DeployKey`, or `EnterpriseOwner`.",
 						},
 						"bypass_mode": {
 							Type:             schema.TypeString,
 							Required:         true,
-							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice([]string{"always", "pull_request", "exempt"}, false)),
+							ValidateDiagFunc: validation.ToDiagFunc(validation.StringInSlice(supportedEnterpriseRulesetBypassModes, false)),
 							Description:      "When the specified actor can bypass the ruleset. `pull_request` means that an actor can only bypass rules on pull requests. `pull_request` is not applicable for the `DeployKey` actor type. Also, `pull_request` is only applicable to branch rulesets. When `bypass_mode` is `exempt`, rules will not be run for that actor and a bypass audit entry will not be created. Can be one of: `always`, `pull_request`, `exempt`.",
 						},
 					},
@@ -1025,7 +1036,11 @@ func resourceGithubEnterpriseRulesetDiff(ctx context.Context, d *schema.Resource
 		return err
 	}
 
-	return validateRulesetRules(ctx, d)
+	if err := validateRulesetRules(ctx, d); err != nil {
+		return err
+	}
+
+	return validateRulesetBypassActors(ctx, d)
 }
 
 // resourceGithubEnterpriseRulesetObject builds the API payload for an enterprise ruleset.

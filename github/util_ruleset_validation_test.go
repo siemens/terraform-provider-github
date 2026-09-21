@@ -224,3 +224,90 @@ func Test_everyTargetHasAnAllowedRuleList(t *testing.T) {
 		}
 	}
 }
+
+func Test_validateBypassActorsForTarget(t *testing.T) {
+	t.Parallel()
+
+	actor := func(actorType, bypassMode string) any {
+		return map[string]any{"actor_type": actorType, "bypass_mode": bypassMode}
+	}
+
+	tests := []struct {
+		name         string
+		target       github.RulesetTarget
+		bypassActors []any
+		errorMsg     string
+	}{
+		{
+			name:         "no bypass actors",
+			target:       github.RulesetTargetRepository,
+			bypassActors: []any{},
+		},
+		{
+			name:         "always mode is valid for any target",
+			target:       github.RulesetTargetRepository,
+			bypassActors: []any{actor("EnterpriseOwner", "always")},
+		},
+		{
+			name:         "exempt mode is valid for any target",
+			target:       github.RulesetTargetPush,
+			bypassActors: []any{actor(bypassActorTypeDeployKey, "exempt")},
+		},
+		{
+			name:         "pull_request is valid for the branch target",
+			target:       github.RulesetTargetBranch,
+			bypassActors: []any{actor("Team", bypassModePullRequest)},
+		},
+		{
+			name:         "pull_request is rejected for the tag target",
+			target:       github.RulesetTargetTag,
+			bypassActors: []any{actor("Team", bypassModePullRequest)},
+			errorMsg:     `bypass_actors.0: bypass_mode "pull_request" is only valid for the branch target, got "tag"`,
+		},
+		{
+			name:         "pull_request is rejected for the push target",
+			target:       github.RulesetTargetPush,
+			bypassActors: []any{actor("Team", bypassModePullRequest)},
+			errorMsg:     `bypass_actors.0: bypass_mode "pull_request" is only valid for the branch target, got "push"`,
+		},
+		{
+			name:         "pull_request is rejected for the repository target",
+			target:       github.RulesetTargetRepository,
+			bypassActors: []any{actor("Team", bypassModePullRequest)},
+			errorMsg:     `bypass_actors.0: bypass_mode "pull_request" is only valid for the branch target, got "repository"`,
+		},
+		{
+			name:         "pull_request is rejected for deploy keys on the branch target",
+			target:       github.RulesetTargetBranch,
+			bypassActors: []any{actor(bypassActorTypeDeployKey, bypassModePullRequest)},
+			errorMsg:     `bypass_actors.0: bypass_mode "pull_request" is not valid for the "DeployKey" actor type`,
+		},
+		{
+			name:         "the offending actor index is reported",
+			target:       github.RulesetTargetBranch,
+			bypassActors: []any{actor("Team", "always"), actor(bypassActorTypeDeployKey, bypassModePullRequest)},
+			errorMsg:     `bypass_actors.1: bypass_mode "pull_request" is not valid for the "DeployKey" actor type`,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			err := validateBypassActorsForTarget(t.Context(), tt.target, tt.bypassActors)
+
+			if tt.errorMsg == "" {
+				if err != nil {
+					t.Fatalf("expected no error, got %v", err)
+				}
+				return
+			}
+			if err == nil {
+				t.Fatalf("expected error %q, got nil", tt.errorMsg)
+			}
+			if err.Error() != tt.errorMsg {
+				t.Errorf("expected error %q, got %q", tt.errorMsg, err.Error())
+			}
+		})
+	}
+}

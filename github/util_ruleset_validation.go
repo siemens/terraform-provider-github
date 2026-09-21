@@ -13,6 +13,13 @@ import (
 
 var operatorValidation = validation.ToDiagFunc(validation.StringInSlice([]string{"starts_with", "ends_with", "contains", "regex"}, false))
 
+const (
+	// bypassModePullRequest lets an actor bypass a ruleset only on pull requests.
+	bypassModePullRequest = "pull_request"
+
+	bypassActorTypeDeployKey = "DeployKey"
+)
+
 // branchTagOnlyRules contains rules that are only valid for branch and tag targets.
 //
 // These rules apply to ref-based operations (branches and tags) and are not supported
@@ -166,6 +173,39 @@ func validateRulesetConditions(ctx context.Context, d *schema.ResourceDiff) erro
 	case github.RulesetTargetPush, github.RulesetTargetRepository:
 		return validateConditionsFieldForRefLessTargets(ctx, target, conditions)
 	}
+	return nil
+}
+
+func validateRulesetBypassActors(ctx context.Context, d *schema.ResourceDiff) error {
+	target := github.RulesetTarget(d.Get("target").(string))
+	return validateBypassActorsForTarget(ctx, target, d.Get("bypass_actors").([]any))
+}
+
+// validateBypassActorsForTarget rejects the `pull_request` bypass mode where GitHub does
+// not support it. The mode only takes effect on pull requests, so it is meaningless for
+// any target other than `branch`, and a deploy key cannot open a pull request at all.
+func validateBypassActorsForTarget(ctx context.Context, target github.RulesetTarget, bypassActors []any) error {
+	for i, raw := range bypassActors {
+		actor, ok := raw.(map[string]any)
+		if !ok {
+			continue
+		}
+		if actor["bypass_mode"] != bypassModePullRequest {
+			continue
+		}
+
+		actorType, _ := actor["actor_type"].(string)
+		tflog.Debug(ctx, "Validating pull_request bypass actor", map[string]any{"target": target, "actor_type": actorType, "index": i})
+
+		if target != github.RulesetTargetBranch {
+			return fmt.Errorf("bypass_actors.%d: bypass_mode %q is only valid for the branch target, got %q", i, bypassModePullRequest, target)
+		}
+		if actorType == bypassActorTypeDeployKey {
+			return fmt.Errorf("bypass_actors.%d: bypass_mode %q is not valid for the %q actor type", i, bypassModePullRequest, bypassActorTypeDeployKey)
+		}
+	}
+
+	tflog.Debug(ctx, "Bypass actor validation passed for target", map[string]any{"target": target})
 	return nil
 }
 
