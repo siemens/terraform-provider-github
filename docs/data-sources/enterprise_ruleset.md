@@ -310,6 +310,7 @@ Read-Only:
 
 - `internal` (Boolean)
 - `private` (Boolean)
+- `public` (Boolean)
 
 
 <a id="nestedobjatt--rules--required_code_scanning"></a>

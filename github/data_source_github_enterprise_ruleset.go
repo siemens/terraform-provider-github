@@ -25,9 +25,10 @@ func dataSourceGithubEnterpriseRuleset() *schema.Resource {
 				Description:      "The slug of the enterprise the ruleset belongs to.",
 			},
 			"ruleset_id": {
-				Type:        schema.TypeInt,
-				Required:    true,
-				Description: "GitHub ID for the ruleset.",
+				Type:             schema.TypeInt,
+				Required:         true,
+				ValidateDiagFunc: validation.ToDiagFunc(validation.IntAtLeast(1)),
+				Description:      "GitHub ID for the ruleset.",
 			},
 			"name": {
 				Type:        schema.TypeString,
@@ -553,6 +554,11 @@ func dataSourceGithubEnterpriseRuleset() *schema.Resource {
 										Type:        schema.TypeBool,
 										Computed:    true,
 										Description: "Whether private visibility is allowed.",
+									},
+									"public": {
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Description: "Whether public visibility is allowed.",
 									},
 								},
 							},

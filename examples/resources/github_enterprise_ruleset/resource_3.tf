@@ -26,6 +26,7 @@ resource "github_enterprise_ruleset" "repository_lifecycle" {
     repository_visibility {
       internal = true
       private  = true
+      public   = false
     }
   }
 }

@@ -744,6 +744,12 @@ func resourceGithubEnterpriseRuleset() *schema.Resource {
 										Default:     false,
 										Description: "Allow private visibility for repositories.",
 									},
+									"public": {
+										Type:        schema.TypeBool,
+										Optional:    true,
+										Default:     false,
+										Description: "Allow public visibility for repositories.",
+									},
 								},
 							},
 						},

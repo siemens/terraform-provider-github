@@ -1741,6 +1741,7 @@ func TestRoundTripEnterpriseRepositoryTargetRules(t *testing.T) {
 		"repository_visibility": []any{map[string]any{
 			"internal": true,
 			"private":  false,
+			"public":   true,
 		}},
 	}}
 
@@ -1760,8 +1761,8 @@ func TestRoundTripEnterpriseRepositoryTargetRules(t *testing.T) {
 	if expanded.RepositoryName == nil || expanded.RepositoryName.Pattern != "^svc-" {
 		t.Errorf("Expected RepositoryName pattern ^svc-, got %v", expanded.RepositoryName)
 	}
-	if expanded.RepositoryVisibility == nil || !expanded.RepositoryVisibility.Internal || expanded.RepositoryVisibility.Private {
-		t.Errorf("Expected RepositoryVisibility internal only, got %v", expanded.RepositoryVisibility)
+	if expanded.RepositoryVisibility == nil || !expanded.RepositoryVisibility.Internal || expanded.RepositoryVisibility.Private || !expanded.RepositoryVisibility.Public {
+		t.Errorf("Expected RepositoryVisibility internal and public, got %v", expanded.RepositoryVisibility)
 	}
 
 	flattened := flattenRules(t.Context(), expanded, rulesetLevelEnterprise)
@@ -1781,8 +1782,8 @@ func TestRoundTripEnterpriseRepositoryTargetRules(t *testing.T) {
 		t.Errorf("Expected repository_name pattern ^svc-, got %v", names[0]["pattern"])
 	}
 	visibility := rulesMap["repository_visibility"].([]map[string]any)
-	if visibility[0]["internal"] != true || visibility[0]["private"] != false {
-		t.Errorf("Expected repository_visibility internal only, got %v", visibility[0])
+	if visibility[0]["internal"] != true || visibility[0]["private"] != false || visibility[0]["public"] != true {
+		t.Errorf("Expected repository_visibility internal and public, got %v", visibility[0])
 	}
 }
 

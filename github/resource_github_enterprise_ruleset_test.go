@@ -345,6 +345,7 @@ func TestAccGithubEnterpriseRuleset(t *testing.T) {
 			    repository_visibility {
 			      internal = true
 			      private  = true
+			      public   = true
 			    }
 			  }
 			}
@@ -362,6 +363,7 @@ func TestAccGithubEnterpriseRuleset(t *testing.T) {
 						statecheck.ExpectKnownValue(enterpriseRulesetResource, tfjsonpath.New("rules").AtSliceIndex(0).AtMapKey("repository_transfer"), knownvalue.Bool(true)),
 						statecheck.ExpectKnownValue(enterpriseRulesetResource, tfjsonpath.New("rules").AtSliceIndex(0).AtMapKey("repository_name").AtSliceIndex(0).AtMapKey("pattern"), knownvalue.StringExact("^svc-")),
 						statecheck.ExpectKnownValue(enterpriseRulesetResource, tfjsonpath.New("rules").AtSliceIndex(0).AtMapKey("repository_visibility").AtSliceIndex(0).AtMapKey("internal"), knownvalue.Bool(true)),
+						statecheck.ExpectKnownValue(enterpriseRulesetResource, tfjsonpath.New("rules").AtSliceIndex(0).AtMapKey("repository_visibility").AtSliceIndex(0).AtMapKey("public"), knownvalue.Bool(true)),
 					},
 				},
 			},

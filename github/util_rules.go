@@ -795,6 +795,7 @@ func expandRules(input []any, level rulesetLevel) *github.RepositoryRulesetRules
 			rulesetRules.RepositoryVisibility = &github.RepositoryVisibilityRuleParameters{
 				Internal: repositoryVisibilityMap["internal"].(bool),
 				Private:  repositoryVisibilityMap["private"].(bool),
+				Public:   repositoryVisibilityMap["public"].(bool),
 			}
 		}
 	}
@@ -1043,6 +1044,7 @@ func flattenRules(ctx context.Context, rules *github.RepositoryRulesetRules, lev
 			rulesMap["repository_visibility"] = []map[string]any{{
 				"internal": rules.RepositoryVisibility.Internal,
 				"private":  rules.RepositoryVisibility.Private,
+				"public":   rules.RepositoryVisibility.Public,
 			}}
 		}
 	}

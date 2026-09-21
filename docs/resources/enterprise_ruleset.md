@@ -121,6 +121,7 @@ resource "github_enterprise_ruleset" "repository_lifecycle" {
     repository_visibility {
       internal = true
       private  = true
+      public   = false
     }
   }
 }
@@ -373,6 +374,7 @@ Optional:
 
 - `internal` (Boolean) Allow internal visibility for repositories.
 - `private` (Boolean) Allow private visibility for repositories.
+- `public` (Boolean) Allow public visibility for repositories.
 
 
 <a id="nestedblock--rules--required_code_scanning"></a>
